@@ -20,6 +20,12 @@ package org.avidj.threst;
  * #L%
  */
 
+import org.avidj.threst.TestRun.TestThread;
+import org.avidj.util.Strings;
+import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,13 +33,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-
-import org.avidj.threst.TestRun.TestThread;
-import org.avidj.util.Strings;
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Utility for executing concurrent test with the purpose to reveal concurrency bugs such as 
@@ -46,10 +45,10 @@ public class ConcurrentTest {
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentTest.class);
   final ExecutorService pool = 
       Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
-        public Thread newThread(Runnable r) {
-          Thread t = new Thread(r);
-          threads.add(t);
-          return t;
+        public Thread newThread(Runnable runnable) {
+          Thread thread = new Thread(runnable);
+          threads.add(thread);
+          return thread;
         }
       });
   final List<TestThread> testThreads;  

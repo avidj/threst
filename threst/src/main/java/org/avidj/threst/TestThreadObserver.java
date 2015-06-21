@@ -1,15 +1,15 @@
 package org.avidj.threst;
 
+import org.avidj.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.avidj.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class TestThreadObserver implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(TestThreadObserver.class);
