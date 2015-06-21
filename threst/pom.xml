@@ -6,7 +6,12 @@
   <artifactId>threst</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
+	
   <name>threst</name>
+  <organization>
+    <name>David Kensche</name>
+  </organization>
+  <inceptionYear>2015</inceptionYear>
 
 	<properties>
 		<compileSource>1.8</compileSource>
