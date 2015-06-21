@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A single test run. It is observed
+ */
 public class TestRun {
   static final long SLEEP_INTERVAL = 5;
   
@@ -49,7 +52,7 @@ public class TestRun {
   // allow waiting threads to continue. Also discovers deadlocks.
   private final TestThreadObserver threadObserver = new TestThreadObserver(this);
   
-  public List<Throwable> getThrowables() {
+  List<Throwable> getThrowables() {
     return Collections.unmodifiableList(throwables);
   }
 
