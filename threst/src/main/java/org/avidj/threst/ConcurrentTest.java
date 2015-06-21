@@ -173,9 +173,10 @@ public class ConcurrentTest {
   @FunctionalInterface
   public interface Actions {
     /**
-     * @param t the test thread, can be used for waiting for ticks within blocks
+     * A block of actions performed concurrently with the others. 
+     * @param testThread the test thread, can be used for waiting for ticks within blocks
      */
-    abstract void execute(TestThread t) throws Exception;
+    public void execute(TestThread testThread) throws Exception;
   }
 
   @FunctionalInterface
@@ -192,7 +193,7 @@ public class ConcurrentTest {
     }
     
     @Override
-    public void execute(TestThread t) throws Exception {
+    public void execute(TestThread testThread) throws Exception {
       actions.execute();
     }
   }

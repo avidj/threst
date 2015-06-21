@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class TestRun {
+public class TestRun {
   static final long SLEEP_INTERVAL = 5;
   
   private final List<Throwable> throwables;
@@ -113,7 +113,7 @@ class TestRun {
     return threadObserver.getDeadlock();
   }
 
-  static class TestThread implements Runnable {
+  public static class TestThread implements Runnable {
     private final List<Actions> blocks = new ArrayList<>();
     private int index;
     private TestRun test;
