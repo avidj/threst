@@ -120,7 +120,7 @@ public class ConcurrentTest {
    * @param count the number of successful threads required
    * @return this
    */
-  private ConcurrentTest assertSuccessCount(int count) {
+  public ConcurrentTest assertSuccessCount(int count) {
     // Repetitions increase the probability to find erroneous interleavings of operations.
     for ( int i = 0; i < repeat; i++ ) {
       LOG.trace("run {}", i + 1);
