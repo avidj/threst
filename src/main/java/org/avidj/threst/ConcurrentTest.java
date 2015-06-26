@@ -21,12 +21,10 @@ package org.avidj.threst;
  */
 
 import org.avidj.threst.TestRun.TestThread;
-import org.avidj.util.Strings;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +52,6 @@ public class ConcurrentTest {
   final List<TestThread> testThreads;  
   final List<Thread> threads;  
   private int repeat = 1;
-  private int killAfter;
   private int nextIndex = 0;
   final int sessionCount;
   private TestRun lastRun;
@@ -89,16 +86,6 @@ public class ConcurrentTest {
   }
 
   /**
-   * In case of deadlocks, the test must be aborted, i.e., threads must be killed. 
-   * @param killAfterMs the maximum number of milliseconds to wait for the test to end
-   * @return this
-   */
-  public ConcurrentTest killAfter(int killAfterMs) {
-    this.killAfter = killAfterMs;
-    return this;
-  }
-
-  /**
    * The number of repetitions of the test. This must be sufficiently high for finding concurrency
    * bugs. The default of 1 is only sufficient for actually sequential tests.
    * @param repeat the number of repetitions to do
@@ -126,10 +113,8 @@ public class ConcurrentTest {
       LOG.trace("run {}", i + 1);
       lastRun = new TestRun(this);
       lastRun.runOnce();
-      if ( lastRun.getDeadlock() != null ) {
-        List<ThreadInfo> deadlock = lastRun.getDeadlock();
-        LOG.warn("\nDeadlock detected:\n" + Strings.join("", deadlock));
-        Assert.fail();
+      if ( lastRun.hasAssertionError() ) {
+        throw lastRun.getAssertionError();
       }
       assertSuccessCount(lastRun, count);
     }

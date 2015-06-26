@@ -20,14 +20,16 @@ package org.avidj.threst;
  * #L%
  */
 
+import com.google.common.base.Preconditions;
+
 import org.avidj.threst.ConcurrentTest.Actions;
 import org.avidj.threst.ConcurrentTest.NoArgActions;
 import org.avidj.threst.ConcurrentTest.NoArgActionsWrapper;
 
-import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,8 +47,8 @@ public class TestRun {
   final Object lock = new Object();
   final ConcurrentTest concurrentTest;
 
-  // TODO: only use existing ticks and stop if none are left (starvation, missed signals, etc)
   int tick = 0;
+  final PriorityQueue<Integer> ticks = new PriorityQueue<>();
 
   // Increments the tick counter when all threads are blocked, waiting, or terminated, so as to 
   // allow waiting threads to continue. Also discovers deadlocks.
@@ -62,6 +64,22 @@ public class TestRun {
     for ( int i = 0; i < concurrentTest.sessionCount; i++ ) {
       throwables.add(null);
     }
+  }
+
+  private void appendWaitFor(int tick) {
+    if ( this.tick == tick ) {
+      return;
+    }
+    if ( this.tick > tick ) {
+      throw new RuntimeException("Ticks are out of order. This is surely a bug.");
+    }
+    final Integer newTick = Integer.valueOf(tick);
+    synchronized ( lock ) {
+      if ( ticks.contains(newTick) ) {
+        return;
+      }
+    }
+    ticks.add(newTick);
   }
 
   void runOnce() {
@@ -83,7 +101,7 @@ public class TestRun {
   private void awaitFinished() throws InterruptedException {
     synchronized ( lock ) {
       while ( finishedCount.get() < concurrentTest.sessionCount 
-          && threadObserver.getDeadlock() == null ) {
+          && threadObserver.getAssertionError() == null ) {
         lock.wait();
       }
     }
@@ -112,10 +130,14 @@ public class TestRun {
     return successCount.get();
   }
 
-  public List<ThreadInfo> getDeadlock() {    
-    return threadObserver.getDeadlock();
+  public boolean hasAssertionError() {
+    return ( threadObserver.getAssertionError() != null );
   }
-
+  
+  public AssertionError getAssertionError() {
+    return threadObserver.getAssertionError();
+  }
+  
   public static class TestThread implements Runnable {
     private final List<Actions> blocks = new ArrayList<>();
     private int index;
@@ -154,11 +176,20 @@ public class TestRun {
         test.throwables.set(index, t);
       } finally {
         test.finishedCount.getAndIncrement();
-        test.lock.notify();
+        synchronized ( test.lock ) {
+          test.lock.notify();
+        }
       }
     }
 
-    public void waitFor(int tick) {
+    /**
+     * Wait for the given tick. Ticks must be waited for in order, gaps are fine.
+     * @param tick the tick to wait for
+     * @throws IllegalArgumentException if the tick is negative or out of order
+     */
+    public void waitFor(int tick) throws IllegalArgumentException {
+      Preconditions.checkArgument(tick >= 0, "ticks must be > 0");
+      test.appendWaitFor(tick);
       try {
         synchronized ( test.lock ) {
           while ( test.tick < tick ) {

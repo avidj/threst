@@ -21,8 +21,6 @@ package org.avidj.threst;
  */
 
 import org.avidj.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -32,17 +30,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 class TestThreadObserver implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(TestThreadObserver.class);
   private final ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
   private final TestRun testRun;
   private List<ThreadInfo> deadlock;
+  private AssertionError assertionError;
 
   TestThreadObserver(TestRun testRun) {
     this.testRun = testRun;
   }
   
-  List<ThreadInfo> getDeadlock() {
-    return deadlock;
+  AssertionError getAssertionError() {
+    return assertionError;
   }
 
   @Override
@@ -52,12 +50,17 @@ class TestThreadObserver implements Runnable {
         synchronized ( testRun.lock ) {
           if ( noThreadsRunning() ) {
             deadlock = findJavaLevelDeadlock();
-            testRun.tick++;
-            testRun.lock.notifyAll();
             if ( deadlock != null ) {
-              LOG.info(Strings.join(deadlock));
-              return;
+              assertionError = 
+                  new AssertionError("\nDeadlock detected:\n" + Strings.join("", deadlock));
             }
+            if ( testRun.ticks.isEmpty() ) {
+              assertionError = new AssertionError("Threads are starving. Missed signal?");
+            }
+            if ( !testRun.ticks.isEmpty() ) {
+              testRun.tick = testRun.ticks.remove().intValue();
+            }
+            testRun.lock.notifyAll();
           }
         }
       }
