@@ -135,7 +135,7 @@ public class ConcurrentTest {
    * Execute the test.
    * @return this
    */
-  public ConcurrentTest run() {
+  private ConcurrentTest run() {
     // Repetitions increase the probability to find erroneous interleavings of operations.
     for ( int i = 0; i < repeat; i++ ) {
       TestRun run = new TestRun(this);

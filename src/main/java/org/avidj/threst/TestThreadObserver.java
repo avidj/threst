@@ -33,7 +33,7 @@ class TestThreadObserver implements Runnable {
   private final ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
   private final TestRun testRun;
   private List<ThreadInfo> deadlock;
-  private AssertionError assertionError;
+  private volatile AssertionError assertionError;
 
   TestThreadObserver(TestRun testRun) {
     this.testRun = testRun;
@@ -43,11 +43,15 @@ class TestThreadObserver implements Runnable {
     return assertionError;
   }
 
+  private boolean secondChance = false;
+  
   @Override
   public void run() {
     while ( !testRun.finished() ) {
       if ( noThreadsRunning() ) {
-        synchronized ( testRun.lock ) {
+        if ( waitingForTick() ) {
+          tick();
+        } else {
           if ( noThreadsRunning() ) {
             deadlock = findJavaLevelDeadlock();
             if ( deadlock != null ) {
@@ -55,12 +59,13 @@ class TestThreadObserver implements Runnable {
                   new AssertionError("\nDeadlock detected:\n" + Strings.join("", deadlock));
             }
             if ( testRun.ticks.isEmpty() ) {
-              assertionError = new AssertionError("Threads are starving. Missed signal?");
+              if ( secondChance ) {
+//                assertionError = new AssertionError("Threads are starving. Missed signal?");
+              }
+              secondChance = true;
             }
-            if ( !testRun.ticks.isEmpty() ) {
-              testRun.tick = testRun.ticks.remove().intValue();
-            }
-            testRun.lock.notifyAll();
+          } else {
+            secondChance = false;
           }
         }
       }
@@ -70,17 +75,68 @@ class TestThreadObserver implements Runnable {
         // this cannot happen
       }
     }
+    synchronized ( testRun.lock ) {
+      testRun.lock.notifyAll();
+    }
   }
   
+  private void tick() {
+    if ( !testRun.ticks.isEmpty() ) {
+      synchronized ( testRun.lock ) {
+        testRun.tick = testRun.ticks.remove().intValue();
+        testRun.lock.notifyAll();
+      }
+    }
+  }
+
   private boolean noThreadsRunning() {
     for ( Thread t : testRun.concurrentTest.threads ) {
+      final ThreadInfo info = threadMxBean.getThreadInfo(t.getId());
       if ( t.getState() == Thread.State.RUNNABLE ) {
         return false;
+//      } else if ( t.getState() == Thread.State.BLOCKED ) {
+//        if ( testRun.LOCK_NAME.equals(info.getLockName()) ) { 
+//          return false;
+//        }
+//      } else if ( t.getState() == Thread.State.WAITING ) {
+//        if ( testRun.LOCK_NAME.equals(info.getLockName()) ) { 
+//          return false;
+//        }
       }
     }
     return true;
   }
-  
+
+  private boolean waitingForTick() {
+    int blocked = 0;
+    int waiting = 0;
+    int terminated = 0;
+    final long observer = Thread.currentThread().getId();
+    for ( Thread t : testRun.concurrentTest.threads ) {
+      final ThreadInfo info = threadMxBean.getThreadInfo(t.getId());
+      switch ( t.getState() ) {
+      case WAITING:
+        if ( testRun.LOCK_NAME.equals(info.getLockName()) ) { //info.getLockOwnerId() == observer ) {
+          return true;
+        }
+        waiting++;
+        break;
+      case RUNNABLE:
+        return false;
+      case BLOCKED:
+        if ( testRun.LOCK_NAME.equals(info.getLockName()) ) { //info.getLockOwnerId() == observer ) {
+          return false;
+        }
+        blocked++;
+        break;
+      case TERMINATED:
+        terminated++;
+        break;
+      }
+    }
+    return false;
+  }
+
   private List<ThreadInfo> findJavaLevelDeadlock() {
     for ( Thread t : testRun.concurrentTest.threads ) {
       if ( t.getState() == Thread.State.BLOCKED ) {
@@ -90,6 +146,10 @@ class TestThreadObserver implements Runnable {
         Long blockerId;
         do {
           blockerId = currentInfo.getLockOwnerId();
+          if ( blockerId == -1 ) {
+            // not blocked anymore
+            break;
+          }
           currentInfo = threadMxBean.getThreadInfo(blockerId);
           loop.add(currentInfo);
         } while ( 

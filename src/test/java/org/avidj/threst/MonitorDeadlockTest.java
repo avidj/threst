@@ -65,13 +65,13 @@ public class MonitorDeadlockTest {
       synchronized ( lockB ) {
         bLocked = true;
         LOG.info("b");
-        aWaitALocked();
+        bWaitALocked();
         a();
       }
       bLocked = false;
     }
 
-    private void aWaitALocked() throws InterruptedException {
+    private void bWaitALocked() throws InterruptedException {
       while ( !aLocked ) {
         lockB.wait();
       }

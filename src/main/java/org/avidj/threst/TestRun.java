@@ -43,11 +43,13 @@ public class TestRun {
   private final CountDownLatch startFlag = new CountDownLatch(1);
   private final AtomicInteger successCount = new AtomicInteger();
   private final AtomicInteger finishedCount = new AtomicInteger();
+  
 
-  final Object lock = new Object();
+  final Object lock = new Object();// { @Override public String toString() { return LOCK_NAME; } };
+  final String LOCK_NAME = lock.toString();
   final ConcurrentTest concurrentTest;
 
-  int tick = 0;
+  volatile int tick = 0;
   final PriorityQueue<Integer> ticks = new PriorityQueue<>();
 
   // Increments the tick counter when all threads are blocked, waiting, or terminated, so as to 
@@ -67,23 +69,24 @@ public class TestRun {
   }
 
   private void appendWaitFor(int tick) {
-    if ( this.tick == tick ) {
-      return;
-    }
-    if ( this.tick > tick ) {
-      throw new RuntimeException("Ticks are out of order. This is surely a bug.");
-    }
-    final Integer newTick = Integer.valueOf(tick);
     synchronized ( lock ) {
+      if ( this.tick == tick ) {
+        return;
+      }
+      if ( this.tick > tick ) {
+        throw new RuntimeException("Ticks expected out of order. This is a bug in your test.");
+      }
+      final Integer newTick = Integer.valueOf(tick);
       if ( ticks.contains(newTick) ) {
         return;
       }
+      // TODO: INSERT (SORT) TICK AT CORRECT POSITION!
+      ticks.add(newTick);
     }
-    ticks.add(newTick);
   }
 
   void runOnce() {
-    // start the threads, actually they will wait for the startflag
+    // start the threads, actually they will wait for the start flag
     for ( TestThread thread : concurrentTest.testThreads ) {
       thread.setTestRun(this);
       concurrentTest.pool.execute(thread);
@@ -99,9 +102,9 @@ public class TestRun {
   }
 
   private void awaitFinished() throws InterruptedException {
-    synchronized ( lock ) {
+    synchronized ( lock ) { 
       while ( finishedCount.get() < concurrentTest.sessionCount 
-          && threadObserver.getAssertionError() == null ) {
+        && threadObserver.getAssertionError() == null ) {
         lock.wait();
       }
     }
@@ -113,11 +116,11 @@ public class TestRun {
    * @return true, iff all test threads succeeded
    */
   boolean success() {
-    return successCount.get() == concurrentTest.testThreads.size();
+    return successCount.get() == concurrentTest.sessionCount;
   }
   
   boolean finished() {
-    return finishedCount.get() == concurrentTest.testThreads.size();
+    return finishedCount.get() == concurrentTest.sessionCount || hasAssertionError();
   }
   
   /**
@@ -201,5 +204,4 @@ public class TestRun {
       }
     }
   }
-
 }

@@ -34,13 +34,14 @@ public class TickTest {
   public void testWaitOnce() {
     threads(
         thread().exec((t) -> {
-          LOG.info("We shall wait for 1");
+          LOG.debug("We shall wait for 1");
           t.waitFor(1);
-          LOG.info("1");
+          LOG.trace("1");
         }),
         thread().exec((t) -> {
-          LOG.info("0");
+          LOG.trace("0");
         }))
+        .repeat(1000)
         .assertSuccess();
   }  
 
@@ -48,14 +49,15 @@ public class TickTest {
   public void testWaitAnyParallel() {
     threads(
         thread().exec((t) -> {
-          LOG.info("We shall wait for 3 with two threads");
+          LOG.debug("We shall wait for 3 with two threads");
           t.waitFor(3);
-          LOG.info("3");
+          LOG.trace("3");
         }),
         thread().exec((t) -> {
           t.waitFor(3);
-          LOG.info("3");
+          LOG.trace("3");
         }))
+        .repeat(1000)
         .assertSuccess();
   }  
 
@@ -63,12 +65,13 @@ public class TickTest {
   public void testWaitOutOfOrder() {
     threads(
         thread().exec((t) -> {
-          LOG.info("We shall wait for 2 and then 1");
+          LOG.debug("We shall wait for 2 and then 1");
           t.waitFor(2);
-          LOG.info("2");
+          LOG.trace("2");
           t.waitFor(1);
-          LOG.info("1");
+          LOG.trace("1");
         }))
+        .repeat(1000)
         .assertSuccess();
   }  
 
@@ -76,32 +79,49 @@ public class TickTest {
   public void testWaitWithGapsAndParallel() {
     threads(
         thread().exec((t) -> {
-          LOG.info("We shall wait for 1, 2, 3, 5, 8, 13, 21 (twice), 34 (twice)");
+          LOG.debug("We shall wait for 1, 2, 3, 5, 8, 13, 21 (twice), 34 (twice)");
           t.waitFor(1);
-          LOG.info("1");
+          LOG.trace("1");
           t.waitFor(5);
-          LOG.info("5");
+          LOG.trace("5");
           t.waitFor(21);
-          LOG.info("21");
+          LOG.trace("21");
           t.waitFor(34);
-          LOG.info("34");
+          LOG.trace("34");
         }),
         thread().exec((t) -> {
           t.waitFor(2);
-          LOG.info("2");
+          LOG.trace("2");
           t.waitFor(3);
-          LOG.info("3");
+          LOG.trace("3");
           t.waitFor(21);
-          LOG.info("21");
+          LOG.trace("21");
         }),
         thread().exec((t) -> {
           t.waitFor(8);
-          LOG.info("8");
+          LOG.trace("8");
           t.waitFor(13);
-          LOG.info("13");
+          LOG.trace("13");
           t.waitFor(34);
-          LOG.info("34");
+          LOG.trace("34");
         }))
+        .repeat(1000)
+        .assertSuccess();
+  }  
+
+  @Test
+  public void testWaitForNothing() {
+    threads(
+        thread().exec((t) -> {
+          LOG.debug("I'm fine");
+        }),
+        thread().exec((t) -> {
+          LOG.trace("Me too");
+        }),
+        thread().exec((t) -> {
+          LOG.trace("And me as well");
+        }))
+        .repeat(1000)
         .assertSuccess();
   }  
 }
