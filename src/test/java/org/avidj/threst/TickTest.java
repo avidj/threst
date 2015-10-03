@@ -121,7 +121,7 @@ public class TickTest {
         thread().exec((t) -> {
           LOG.trace("And me as well");
         }))
-        .repeat(1000000)
+        .repeat(10000)
         .assertSuccess();
   }  
 }
