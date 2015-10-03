@@ -79,7 +79,7 @@ public class TickTest {
   public void testWaitWithGapsAndParallel() {
     threads(
         thread().exec((t) -> {
-          LOG.debug("We shall wait for 1, 2, 3, 5, 8, 13, 21 (twice), 34 (twice)");
+          LOG.trace("We shall wait for 1, 2, 3, 5, 8, 13, 21 (twice), 34 (twice)");
           t.waitFor(1);
           LOG.trace("1");
           t.waitFor(5);
@@ -121,7 +121,7 @@ public class TickTest {
         thread().exec((t) -> {
           LOG.trace("And me as well");
         }))
-        .repeat(1000)
+        .repeat(1000000)
         .assertSuccess();
   }  
 }

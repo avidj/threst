@@ -46,7 +46,7 @@ public class TestRun {
   
 
   final Object lock = new Object();// { @Override public String toString() { return LOCK_NAME; } };
-  final String LOCK_NAME = lock.toString();
+  final String lockName = lock.toString();
   final ConcurrentTest concurrentTest;
 
   volatile int tick = 0;
@@ -102,7 +102,7 @@ public class TestRun {
   }
 
   private void awaitFinished() throws InterruptedException {
-    synchronized ( lock ) { 
+    synchronized ( lock ) {
       while ( finishedCount.get() < concurrentTest.sessionCount 
         && threadObserver.getAssertionError() == null ) {
         lock.wait();
