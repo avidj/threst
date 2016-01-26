@@ -96,6 +96,9 @@ public class ConcurrentTest {
     return this;
   }
 
+  /**
+   * @return true iff all sessions were successful
+   */
   public ConcurrentTest assertSuccess() {
     return assertSuccessCount(sessionCount);
   }
@@ -154,14 +157,27 @@ public class ConcurrentTest {
     return lastRun.successCount();
   }
 
+  /**
+   * Returns the list of errors and exceptions thrown during the previous run of the test.
+   * @return the list of throwables thrown during the previous run of the test
+   */
   public List<Throwable> getThrowables() {
     return Collections.unmodifiableList(lastRun.getThrowables());
   }
 
+  /**
+   * Create a new thread of actions to be tested.
+   * @return a new test thread, a container for a set of operations that are to be executed in 
+   *     parallel to other threads
+   */
   public static TestThread thread() {
     return new TestThread();
   }
     
+  /**
+   * You can provide the test thread as an argument to a test block and then access it, e.g., to
+   * wait for certain ticks. 
+   */
   @FunctionalInterface
   public interface Actions {
     /**
@@ -171,6 +187,9 @@ public class ConcurrentTest {
     public void execute(TestThread testThread) throws Exception;
   }
 
+  /**
+   * Functional interface used for the executions that don't require arguments. 
+   */
   @FunctionalInterface
   public interface NoArgActions {
     abstract void execute() throws Exception;

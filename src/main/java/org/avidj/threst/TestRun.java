@@ -88,7 +88,7 @@ public class TestRun {
   void runOnce() {
     // start the threads, actually they will wait for the start flag
     for ( TestThread thread : concurrentTest.testThreads ) {
-      thread.setTestRun(this);
+      thread.test = this;
       concurrentTest.pool.execute(thread);
     }
     // give all test threads the start signal
@@ -153,10 +153,10 @@ public class TestRun {
       this.index = index;
     }
     
-    private void setTestRun(TestRun test) {
-      this.test = test;
-    }
-    
+    /**
+     * @param block a block of actions to be executed
+     * @return this
+     */
     public TestThread exec(Actions block) {
       this.blocks.add(block);
       return this;
