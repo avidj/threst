@@ -32,6 +32,13 @@
 		</repository>
 	</repositories>
 	
+  <distributionManagement>
+    <repository>
+      <id>internal-repository</id>
+      <name>Internal Repository</name>
+      <url>http://172.17:8081/repository/maven-snapshots/</url>
+    </repository>
+  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>
