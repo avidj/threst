@@ -19,9 +19,9 @@ package org.avidj.threst;
  * limitations under the License.
  * #L%
  */
+import org.junit.jupiter.api.Assertions;
 
 import org.avidj.threst.TestRun.TestThread;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,24 +33,26 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Utility for executing concurrent test with the purpose to reveal concurrency bugs such as 
- * deadlocks or missing mutual exclusion. All threads passing does not guarantee that there are
- * no concurrency bugs. An appropriate number of repetitions must be executed to reveal concurrency 
- * bugs, which cannot ever be guaranteed. The number of repetitions can easily be in the order of 
- * several thousands. 
+ * Utility for executing concurrent test with the purpose to reveal concurrency
+ * bugs such as deadlocks or missing mutual exclusion. All threads passing does
+ * not guarantee that there are no concurrency bugs. An appropriate number of
+ * repetitions must be executed to reveal concurrency bugs, which cannot ever be
+ * guaranteed. The number of repetitions can easily be in the order of several
+ * thousands.
  */
 public class ConcurrentTest {
+
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentTest.class);
-  final ExecutorService pool = 
-      Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
-        public Thread newThread(Runnable runnable) {
-          Thread thread = new Thread(runnable);
-          threads.add(thread);
-          return thread;
-        }
-      });
-  final List<TestThread> testThreads;  
-  final List<Thread> threads;  
+  final ExecutorService pool
+          = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+            public Thread newThread(Runnable runnable) {
+              Thread thread = new Thread(runnable);
+              threads.add(thread);
+              return thread;
+            }
+          });
+  final List<TestThread> testThreads;
+  final List<Thread> threads;
   private int repeat = 1;
   private int nextIndex = 0;
   final int sessionCount;
@@ -63,10 +65,10 @@ public class ConcurrentTest {
   }
 
   /**
-   * Create a concurrent test with any number of test threads. This method follows the builder 
-   * pattern in that the returned test can be further configured by calls to the other public 
-   * methods before running it.
-   * 
+   * Create a concurrent test with any number of test threads. This method
+   * follows the builder pattern in that the returned test can be further
+   * configured by calls to the other public methods before running it.
+   *
    * @param t0 the first test thread
    * @param more any number of additional test threads
    * @return this
@@ -74,7 +76,7 @@ public class ConcurrentTest {
   public static ConcurrentTest threads(TestThread t0, TestThread... more) {
     ConcurrentTest test = new ConcurrentTest(more.length + 1);
     test.add(t0);
-    for ( TestThread t : more ) {
+    for (TestThread t : more) {
       test.add(t);
     }
     return test;
@@ -86,8 +88,10 @@ public class ConcurrentTest {
   }
 
   /**
-   * The number of repetitions of the test. This must be sufficiently high for finding concurrency
-   * bugs. The default of 1 is only sufficient for actually sequential tests.
+   * The number of repetitions of the test. This must be sufficiently high for
+   * finding concurrency bugs. The default of 1 is only sufficient for actually
+   * sequential tests.
+   *
    * @param repeat the number of repetitions to do
    * @return this
    */
@@ -104,19 +108,19 @@ public class ConcurrentTest {
   }
 
   /**
-   * Executes the configured actions concurrently expecting a certain number of successful 
-   * concurrent actions.
-   * 
+   * Executes the configured actions concurrently expecting a certain number of
+   * successful concurrent actions.
+   *
    * @param count the number of successful threads required
    * @return this
    */
   public ConcurrentTest assertSuccessCount(int count) {
     // Repetitions increase the probability to find erroneous interleavings of operations.
-    for ( int i = 0; i < repeat; i++ ) {
+    for (int i = 0; i < repeat; i++) {
       LOG.trace("run {}", i + 1);
       lastRun = new TestRun(this);
       lastRun.runOnce();
-      if ( lastRun.hasAssertionError() ) {
+      if (lastRun.hasAssertionError()) {
         throw lastRun.getAssertionError();
       }
       assertSuccessCount(lastRun, count);
@@ -125,22 +129,23 @@ public class ConcurrentTest {
   }
 
   private void assertSuccessCount(TestRun run, int count) {
-    if ( run.successCount() != count ) {
+    if (run.successCount() != count) {
       List<Throwable> throwables = run.getThrowables();
-      for ( int i = 0, n = throwables.size(); i < n; i++ ) {
+      for (int i = 0, n = throwables.size(); i < n; i++) {
         LOG.error("Error occurred in thread " + i + ": ", throwables.get(i));
       }
-      Assert.fail();
+      Assertions.fail(String.format("success count deviates, expected %d but got %d", count, run.successCount()));
     }
   }
 
   /**
    * Execute the test.
+   *
    * @return this
    */
   private ConcurrentTest run() {
     // Repetitions increase the probability to find erroneous interleavings of operations.
-    for ( int i = 0; i < repeat; i++ ) {
+    for (int i = 0; i < repeat; i++) {
       TestRun run = new TestRun(this);
       run.runOnce();
     }
@@ -148,9 +153,9 @@ public class ConcurrentTest {
   }
 
   /**
-   * The number of successful test threads. That is, the number of threads that did not fail with
-   * an exception or (assertion) error.
-   * 
+   * The number of successful test threads. That is, the number of threads that
+   * did not fail with an exception or (assertion) error.
+   *
    * @return the number of successful test threads
    */
   public int successCount() {
@@ -158,7 +163,9 @@ public class ConcurrentTest {
   }
 
   /**
-   * Returns the list of errors and exceptions thrown during the previous run of the test.
+   * Returns the list of errors and exceptions thrown during the previous run of
+   * the test.
+   *
    * @return the list of throwables thrown during the previous run of the test
    */
   public List<Throwable> getThrowables() {
@@ -167,42 +174,48 @@ public class ConcurrentTest {
 
   /**
    * Create a new thread of actions to be tested.
-   * @return a new test thread, a container for a set of operations that are to be executed in 
-   *     parallel to other threads
+   *
+   * @return a new test thread, a container for a set of operations that are to
+   * be executed in parallel to other threads
    */
   public static TestThread thread() {
     return new TestThread();
   }
-    
+
   /**
-   * You can provide the test thread as an argument to a test block and then access it, e.g., to
-   * wait for certain ticks. 
+   * You can provide the test thread as an argument to a test block and then
+   * access it, e.g., to wait for certain ticks.
    */
   @FunctionalInterface
   public interface Actions {
+
     /**
-     * A block of actions performed concurrently with the others. 
-     * @param testThread the test thread, can be used for waiting for ticks within blocks
+     * A block of actions performed concurrently with the others.
+     *
+     * @param testThread the test thread, can be used for waiting for ticks
+     * within blocks
      */
     public void execute(TestThread testThread) throws Exception;
   }
 
   /**
-   * Functional interface used for the executions that don't require arguments. 
+   * Functional interface used for the executions that don't require arguments.
    */
   @FunctionalInterface
   public interface NoArgActions {
+
     abstract void execute() throws Exception;
   }
-  
+
   // A wrapper to adapt the Actions interface to the NoArgActions interface
   static class NoArgActionsWrapper implements Actions {
+
     private final NoArgActions actions;
-    
+
     NoArgActionsWrapper(NoArgActions actions) {
       this.actions = actions;
     }
-    
+
     @Override
     public void execute(TestThread testThread) throws Exception {
       actions.execute();

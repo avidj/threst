@@ -19,34 +19,40 @@ package org.avidj.threst;
  * limitations under the License.
  * #L%
  */
-
 import static org.avidj.threst.ConcurrentTest.thread;
 import static org.avidj.threst.ConcurrentTest.threads;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MonitorDeadlockTest {
+
   private static final Logger LOG = LoggerFactory.getLogger(MonitorDeadlockTest.class);
 
-  @Test ( expected = AssertionError.class )
+  @Test
   public void testMonitorDeadlock() {
-    final MonitorDeadlocker testClass = new MonitorDeadlocker();    
-    threads(
-        thread().exec(() -> testClass.a() ),
-        thread().exec(() -> testClass.b() ))
-        .assertSuccess();
+    final MonitorDeadlocker testClass = new MonitorDeadlocker();
+    AssertionError e = assertThrows(AssertionError.class, () -> threads(
+            thread().exec(() -> testClass.a()),
+            thread().exec(() -> testClass.b()))
+            .assertSuccess());
+    assertThat(e.getMessage(), stringContainsInOrder("Deadlock detected:"));
   }
-  
+
   private static class MonitorDeadlocker {
+
     private final Object lockA = new Object();
     private final Object lockB = new Object();
     private volatile boolean aLocked = false;
     private volatile boolean bLocked = false;
-    
+
     void a() throws InterruptedException {
-      synchronized ( lockA ) {
+      synchronized (lockA) {
         aLocked = true;
         LOG.info("a");
         aWaitBLocked();
@@ -54,15 +60,15 @@ public class MonitorDeadlockTest {
       }
       aLocked = false;
     }
-    
+
     private void aWaitBLocked() throws InterruptedException {
-      while ( !bLocked ) {
+      while (!bLocked) {
         lockA.wait();
       }
     }
 
     void b() throws InterruptedException {
-      synchronized ( lockB ) {
+      synchronized (lockB) {
         bLocked = true;
         LOG.info("b");
         bWaitALocked();
@@ -72,7 +78,7 @@ public class MonitorDeadlockTest {
     }
 
     private void bWaitALocked() throws InterruptedException {
-      while ( !aLocked ) {
+      while (!aLocked) {
         lockB.wait();
       }
     }

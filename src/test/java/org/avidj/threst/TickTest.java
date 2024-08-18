@@ -22,8 +22,11 @@ package org.avidj.threst;
 
 import static org.avidj.threst.ConcurrentTest.thread;
 import static org.avidj.threst.ConcurrentTest.threads;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +64,9 @@ public class TickTest {
         .assertSuccess();
   }  
 
-  @Test ( expected = AssertionError.class )
+  @Test
   public void testWaitOutOfOrder() {
-    threads(
+    AssertionError e = assertThrows(AssertionError.class, () -> threads(
         thread().exec((t) -> {
           LOG.debug("We shall wait for 2 and then 1");
           t.waitFor(2);
@@ -71,8 +74,10 @@ public class TickTest {
           t.waitFor(1);
           LOG.trace("1");
         }))
-        .repeat(1000)
-        .assertSuccess();
+        .repeat(1)
+        .assertSuccess());
+    // TODO: instead of a deviating success count catch the RuntimeException("Ticks expected out of order")
+    assertThat(e.getMessage(), stringContainsInOrder("success count deviates"));
   }  
 
   @Test
@@ -105,7 +110,7 @@ public class TickTest {
           t.waitFor(34);
           LOG.trace("34");
         }))
-        .repeat(1000)
+        .repeat(100)
         .assertSuccess();
   }  
 

@@ -19,31 +19,35 @@ package org.avidj.threst;
  * limitations under the License.
  * #L%
  */
-
 import static org.avidj.threst.ConcurrentTest.thread;
 import static org.avidj.threst.ConcurrentTest.threads;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StarvationTest {
+
   private static final Logger LOG = LoggerFactory.getLogger(StarvationTest.class);
 
-  @Test ( expected = AssertionError.class )
+  @Test
   public void testStarve() {
     final Object lock = new Object();
-    threads(
-        thread().exec((t) -> {
-          t.waitFor(1);
-          synchronized ( lock ) {
-            lock.wait(); // there will never be a notification on this lock.
-          }
-        }),
-        thread().exec((t) -> {
-          t.waitFor(2);
-          LOG.info("Waited for 2, the other thread should be starving.");
-        }))
-        .assertSuccess();
-  }  
+    AssertionError e = assertThrows(AssertionError.class, () -> threads(
+            thread().exec((t) -> {
+              t.waitFor(1);
+              synchronized (lock) {
+                lock.wait(); // there will never be a notification on this lock.
+              }
+            }),
+            thread().exec((t) -> {
+              t.waitFor(2);
+              LOG.info("Waited for 2, the other thread should be starving.");
+            }))
+            .assertSuccess());
+    assertThat(e.getMessage(), stringContainsInOrder("Threads are starving. Missed signal?"));
+  }
 }
