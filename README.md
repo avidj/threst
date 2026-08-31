@@ -23,13 +23,14 @@ Consider this class from threst's test suite. Please note, this test is successf
     public class MonitorDeadlockTest {
       private static final Logger LOG = LoggerFactory.getLogger(MonitorDeadlockTest.class);
 
-      @Test ( expected = AssertionError.class )
+      @Test
       public void testMonitorDeadlock() {
-        final MonitorDeadlocker testClass = new MonitorDeadlocker();    
-        threads(
-          thread().exec(() -> testClass.a() ),
-          thread().exec(() -> testClass.b() ))
-            .assertSuccess();
+        final MonitorDeadlocker testClass = new MonitorDeadlocker();
+        AssertionError e = assertThrows(AssertionError.class, () -> threads(
+            thread().exec(() -> testClass.a()),
+            thread().exec(() -> testClass.b()))
+              .assertSuccess());
+        assertThat(e.getMessage(), stringContainsInOrder("Deadlock detected:"));
       }
     }
 
@@ -40,7 +41,7 @@ This produces the following output:
     "Thread-2" Id=14 BLOCKED on java.lang.Object@2756c7b6 owned by "Thread-1" Id=13
 
 You may want to assert that only some threads succeed. Consider this test for a lock manager where only one thread
-can successfully obtain a lock:
+can successfully obtain a lock (`lm` is the lock manager under test, not part of threst):
 
     @Test
     public void testForDeadlocks() {
