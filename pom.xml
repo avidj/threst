@@ -8,9 +8,6 @@
   <packaging>jar</packaging>
 	
   <name>threst</name>
-  <organization>
-    <name>David Kensche</name>
-  </organization>
   <inceptionYear>2015</inceptionYear>
 
   <licenses>
