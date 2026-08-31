@@ -2,7 +2,7 @@ package org.avidj.threst;
 
 /*
  * #%L
- * zuul-core
+ * threst
  * %%
  * Copyright (C) 2015 David Kensche
  * %%
