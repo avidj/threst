@@ -20,8 +20,6 @@ package org.avidj.threst;
  * #L%
  */
 
-import com.google.common.base.Preconditions;
-
 import org.avidj.threst.ConcurrentTest.Actions;
 import org.avidj.threst.ConcurrentTest.NoArgActions;
 import org.avidj.threst.ConcurrentTest.NoArgActionsWrapper;
@@ -193,7 +191,9 @@ public class TestRun {
      * @throws IllegalArgumentException if the tick is negative or out of order
      */
     public void waitFor(int tick) throws IllegalArgumentException {
-      Preconditions.checkArgument(tick >= 0, "ticks must be > 0");
+      if ( tick < 0 ) {
+        throw new IllegalArgumentException("ticks must be >= 0, but was: " + tick);
+      }
       test.appendWaitFor(tick);
       try {
         synchronized ( test.lock ) {

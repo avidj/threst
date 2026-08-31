@@ -23,7 +23,6 @@
 
   <properties>
     <compileSource>19</compileSource>
-    <compileTarget>19</compileTarget>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.12.2</junit.version>
   </properties>
@@ -127,9 +126,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.1</version>
         <configuration>
-          <source>${compileSource}</source>
-          <target>${compileTarget}</target>
-          <complianceLevel>${compileSource}</complianceLevel>
+          <release>${compileSource}</release>
 
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
