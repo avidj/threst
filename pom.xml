@@ -150,34 +150,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>1.8</version>
-        <configuration>
-          <verbose>true</verbose>
-          <addSvnKeyWords>false</addSvnKeyWords>
-        </configuration>
-        <executions>
-          <execution>
-            <id>first</id>
-            <goals>
-              <goal>update-file-header</goal>
-            </goals>
-            <phase>process-sources</phase>
-            <configuration>
-              <licenseName>apache_v2</licenseName>
-              <excludes>
-                <exclude>**/log4j2*.xml</exclude>
-                <exclude>target/generated-sources/protobuf/java/**/*.java</exclude>
-                <exclude>**/*.html</exclude>
-                <exclude>**/*.properties</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
 
     <pluginManagement>
@@ -206,19 +178,6 @@
                     <execute>
                       <runOnIncremental>true</runOnIncremental>
                     </execute>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>license-maven-plugin</artifactId>
-                    <versionRange>[1.7,)</versionRange>
-                    <goals>
-                      <goal>update-file-header</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
